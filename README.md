@@ -11,7 +11,7 @@ Python, Streamlit, pypdf, scikit-learn (TF-IDF + cosine similarity), GROQ API
 ## Run locally
 1. Clone the repo
 2. python -m pip install -r requirements.txt
-3. GROQ_API_KEY=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
+3. GROQ_API_KEY= "your_key_here".
 4. python -m streamlit run app.py
 
 ## How it works
