@@ -14,27 +14,22 @@ def find_relevant_chunks(user_question: str, chunks: List[str], top_n: int = 3) 
     top_indices = cosine_sim.argsort()[0][-top_n:][::-1]
     return [chunks[i] for i in top_indices]
 
-def call_claude_api(prompt: str, context_chunks: List[str]) -> str:
-    full_prompt = f"""
-    **Context:**
-    {chr(10).join([f"Chunk {i+1}: {chunk}" for i, chunk in enumerate(context_chunks)])}
-
-    **Question:**
-    {prompt}
-
-    **Instructions:**
-    - Sirf diye gaye context se jawab do.
-    - Agar jawab nahi milta, "Sorry, I don't have enough information."
-    """
-
-    headers = {
-        "Authorization": f"Bearer {os.getenv('CLAUDE_API_KEY')}",
-        "Content-Type": "application/json"
-    }
-    data = {
-        "prompt": full_prompt,
-        "max_tokens": 500
-    }
-
-    response = requests.post("https://api.claude.ai/v1/chat", json=data, headers=headers)
-    return response.json().get("completion", "Sorry, I couldn't process your request.")
+def call_claude_api(user_question, relevant_chunks):
+    context = "\n\n".join(relevant_chunks)
+    response = requests.post(
+        "https://api.groq.com/openai/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {os.getenv('GROQ_API_KEY')}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": "openai/gpt-oss-120b",
+            "messages": [{
+                "role": "user",
+                "content": f"Answer using only this context:\n\n{context}\n\nQuestion: {user_question}",
+            }],
+        },
+        timeout=60,
+    )
+    response.raise_for_status()
+    return response.json()["choices"][0]["message"]["content"]
